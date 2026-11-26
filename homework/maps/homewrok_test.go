@@ -8,9 +8,15 @@ import (
 )
 
 // go test -v homework_test.go
-
+type Node struct {
+	Key   int
+	Value int
+	left  *Node
+	right *Node
+}
 type OrderedMap struct {
-	// need to implement
+	Root *Node
+	size int
 }
 
 func NewOrderedMap() OrderedMap {
@@ -18,23 +24,125 @@ func NewOrderedMap() OrderedMap {
 }
 
 func (m *OrderedMap) Insert(key, value int) {
-	// need to implement
+	if m.Root == nil {
+		m.Root = &Node{Key: key, Value: value}
+		m.size++
+		return
+	}
+	current := m.Root
+	for {
+		if key < current.Key {
+			if current.left == nil {
+				current.left = &Node{Key: key, Value: value}
+				m.size++
+				return
+			}
+			current = current.left
+		} else if key > current.Key {
+			if current.right == nil {
+				current.right = &Node{Key: key, Value: value}
+				m.size++
+				return
+			}
+			current = current.right
+		} else {
+			current.Value = value
+			return
+		}
+	}
 }
 
 func (m *OrderedMap) Erase(key int) {
-	// need to implement
+	m.Root = eraseNode(m.Root, key, &m.size)
+}
+
+func eraseNode(n *Node, key int, size *int) *Node {
+	if n == nil {
+		return nil
+	}
+
+	if key < n.Key {
+		n.left = eraseNode(n.left, key, size)
+		return n
+	}
+
+	if key > n.Key {
+		n.right = eraseNode(n.right, key, size)
+		return n
+	}
+
+	*size--
+
+	if n.left == nil {
+		return n.right
+	}
+
+	if n.right == nil {
+		return n.left
+	}
+
+	successor := minNode(n.right)
+
+	n.Key = successor.Key
+	n.Value = successor.Value
+
+	n.right = eraseSuccessor(n.right, successor.Key)
+
+	return n
+}
+
+func minNode(n *Node) *Node {
+	for n.left != nil {
+		n = n.left
+	}
+	return n
+}
+
+func eraseSuccessor(n *Node, key int) *Node {
+	if key < n.Key {
+		n.left = eraseSuccessor(n.left, key)
+	} else if key > n.Key {
+		n.right = eraseSuccessor(n.right, key)
+	} else {
+		return n.right
+	}
+
+	return n
 }
 
 func (m *OrderedMap) Contains(key int) bool {
+
+	for curr := m.Root; curr != nil; {
+		if key == curr.Key {
+			return true
+		}
+		if key < curr.Key {
+			curr = curr.left
+		} else if key > curr.Key {
+			curr = curr.right
+		}
+	}
 	return false // need to implement
 }
 
 func (m *OrderedMap) Size() int {
-	return 0 // need to implement
+	return m.size // need to implement
 }
 
 func (m *OrderedMap) ForEach(action func(int, int)) {
-	// need to implement
+	var walk func(*Node)
+
+	walk = func(n *Node) {
+		if n == nil {
+			return
+		}
+
+		walk(n.left)
+		action(n.Key, n.Value)
+		walk(n.right)
+	}
+
+	walk(m.Root)
 }
 
 func TestCircularQueue(t *testing.T) {
